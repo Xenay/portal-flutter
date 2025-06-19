@@ -1,20 +1,58 @@
 import 'package:ai_help/widgets/custom_logo.dart';
 import 'package:flutter/material.dart';
-// Assume you have a theme defined somewhere or define colors here
-// import 'package:animated_gradient/animated_gradient.dart'; // Example package
 
-// Placeholder for a potential logo/graphic widget
-class PortalLogo extends StatelessWidget {
+// Animated glow wrapper for the logo
+class AnimatedLogoGlow extends StatefulWidget {
   final double size;
-  const PortalLogo({Key? key, this.size = 150.0}) : super(key: key);
+  const AnimatedLogoGlow({Key? key, this.size = 150.0}) : super(key: key);
+
+  @override
+  _AnimatedLogoGlowState createState() => _AnimatedLogoGlowState();
+}
+
+class _AnimatedLogoGlowState extends State<AnimatedLogoGlow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _spread;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _spread = Tween<double>(begin: 8, end: 24).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Replace with your actual logo or graphic
-    return Icon(
-      Icons.memory, // Placeholder: Represents the 'stick' hardware
-      size: size,
-      color: Theme.of(context).colorScheme.primary, // Use theme color
+    final color = Theme.of(context).colorScheme.primary.withOpacity(0.6);
+    return AnimatedBuilder(
+      animation: _spread,
+      builder: (context, child) => Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color,
+              spreadRadius: _spread.value,
+              blurRadius: _spread.value * 1.5,
+            ),
+          ],
+        ),
+        child: child,
+      ),
+      child: CustomLogo(size: widget.size),
     );
   }
 }
@@ -28,41 +66,33 @@ class MainMenuView extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      // Use a slightly off-black for better depth than Colors.black
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
         children: [
-          // --- Option 1: Subtle Gradient Background ---
-          // AnimatedGradient( // Using example package 'animated_gradient'
-          //   colors: [colorScheme.surface.withOpacity(0.8), colorScheme.surface],
-          //   duration: const Duration(seconds: 5),
-          // ),
-          // --- Option 2: Static Textured/Abstract Background ---
           Container(color: const Color(0xFF0A0A0A)),
-
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: const AssetImage("assets/1.jpg"), // Provide your asset
+                image: const AssetImage('assets/1.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.8), BlendMode.darken
+                  Colors.black.withOpacity(0.8),
+                  BlendMode.darken,
                 ),
               ),
             ),
           ),
-          // --- Option 3: Simple Dark Background (as fallback) ---
 
-          // --- Main Content Layout ---
-          SafeArea( // Ensures content avoids notches/system areas
+          SafeArea(
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Spacer(flex: 2), // Push content down slightly
-                    const CustomLogo(size: 120), // Central visual element
+                    const Spacer(flex: 2),
+                    // Animated glow around the logo
+                    const AnimatedLogoGlow(size: 240),
                     const SizedBox(height: 20),
                     Text(
                       'PORTAL',
@@ -89,36 +119,35 @@ class MainMenuView extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildMainMenuButton(
                       context: context,
-                      label: 'Manage Models', // Changed label for clarity
-                      icon: Icons.dns_outlined, // Icon suggesting models/data
+                      label: 'Manage Models',
+                      icon: Icons.dns_outlined,
                       onPressed: () => Navigator.pushNamed(context, '/models'),
                     ),
                      const SizedBox(height: 20),
                     _buildMainMenuButton(
                       context: context,
-                      label: 'Device & User', // Changed label for clarity
-                      icon: Icons.usb_outlined, // Icon suggesting hardware
+                      label: 'Device & User',
+                      icon: Icons.usb_outlined,
                       onPressed: () => Navigator.pushNamed(context, '/user'),
                     ),
-                    const Spacer(flex: 3), // Push buttons up from bottom slightly
+                    const Spacer(flex: 3),
                   ],
                 ),
               ),
             ),
           ),
 
-          // Settings icon remains easily accessible
           Positioned(
-            top: 40, // Adjust for safe area if needed
+            top: 40,
             right: 20,
             child: IconButton(
               icon: Icon(Icons.settings_outlined, size: 30, color: Colors.white.withOpacity(0.8)),
-              tooltip: 'Settings & More', // Tooltip for Desktop/Web
+              tooltip: 'Settings & More',
               onPressed: () {
                 showDialog(
                   context: context,
                   barrierColor: Colors.black.withOpacity(0.8),
-                  builder: (context) => const ModalMenu(), // Your existing modal menu
+                  builder: (context) => const ModalMenu(),
                 );
               },
             ),
@@ -128,7 +157,6 @@ class MainMenuView extends StatelessWidget {
     );
   }
 
-  // Helper to build consistent menu buttons
   Widget _buildMainMenuButton({
     required BuildContext context,
     required String label,
@@ -143,20 +171,19 @@ class MainMenuView extends StatelessWidget {
       label: Text(label),
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white, // Text and icon color
-        backgroundColor: colorScheme.primary.withOpacity(0.15), // Subtle background
-        minimumSize: const Size(500, 55), // Make buttons wide
+        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.primary.withOpacity(0.15),
+        minimumSize: const Size(500, 55),
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Consistent rounding
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: colorScheme.primary.withOpacity(0.5), // Themed border
+            color: colorScheme.primary.withOpacity(0.5),
             width: 1,
           ),
         ),
         textStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ).copyWith(
-         // Subtle glow/overlay on hover/press (more effective on desktop)
          overlayColor: MaterialStateProperty.resolveWith<Color?>(
            (Set<MaterialState> states) {
              if (states.contains(MaterialState.hovered)) {
@@ -165,17 +192,13 @@ class MainMenuView extends StatelessWidget {
              if (states.contains(MaterialState.pressed)) {
                return colorScheme.primary.withOpacity(0.2);
              }
-             return null; // Defer to the default
+             return null;
            },
          ),
       ),
     );
   }
 }
-
-// --- ModalMenu (Minor Style Tweaks for Consistency) ---
-// You can keep your ModalMenu mostly as is, maybe adjust colors
-// slightly to use Theme.of(context).colorScheme if you define a theme.
 
 class ModalMenu extends StatelessWidget {
  const ModalMenu({Key? key}) : super(key: key);
@@ -185,15 +208,14 @@ class ModalMenu extends StatelessWidget {
    final colorScheme = theme.colorScheme;
 
    return Dialog(
-     backgroundColor: const Color(0xFF1A1A1A), // Slightly lighter dark shade
+     backgroundColor: const Color(0xFF1A1A1A),
      insetPadding: const EdgeInsets.all(20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), // Rounded dialog
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
      child: Container(
-       // Constrain width for larger screens if needed
        constraints: const BoxConstraints(maxWidth: 400),
        padding: const EdgeInsets.all(20),
        child: Column(
-         mainAxisSize: MainAxisSize.min, // Don't take full height unless needed
+         mainAxisSize: MainAxisSize.min,
          children: [
            Align(
              alignment: Alignment.topRight,
@@ -227,7 +249,6 @@ class ModalMenu extends StatelessWidget {
              title: 'Options Page',
              route: '/options',
            ),
-           // Add other items like About, Logout etc. if needed
            const SizedBox(height: 10),
          ],
        ),
@@ -235,7 +256,6 @@ class ModalMenu extends StatelessWidget {
    );
  }
 
- // Helper for consistent ListTiles in the modal
  Widget _buildModalListTile({
    required BuildContext context,
    required IconData icon,
@@ -249,10 +269,10 @@ class ModalMenu extends StatelessWidget {
      leading: Icon(icon, color: colorScheme.primary),
      title: Text(title, style: theme.textTheme.titleMedium?.copyWith(color: Colors.white)),
      onTap: () {
-       Navigator.pop(context); // Close the dialog first
+       Navigator.pop(context);
        Navigator.pushNamed(context, route);
      },
-     hoverColor: colorScheme.primary.withOpacity(0.1), // Subtle hover
+     hoverColor: colorScheme.primary.withOpacity(0.1),
      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
    );
  }

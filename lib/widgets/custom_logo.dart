@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math; // For rotation if needed
 
+
 class CustomLogo extends StatelessWidget {
   final double size; // Allow specifying size
 
